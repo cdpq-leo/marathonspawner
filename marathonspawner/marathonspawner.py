@@ -172,14 +172,15 @@ class MarathonSpawner(Spawner):
 
     def get_port_mappings(self):
         port_mappings = []
-        for p in self.ports:
-            port_mappings.append(
-                MarathonContainerPortMapping(
-                    container_port=p,
-                    host_port=0,
-                    protocol='tcp'
+        if self.network_mode == 'BRIDGE':
+            for p in self.ports:
+                port_mappings.append(
+                    MarathonContainerPortMapping(
+                        container_port=p,
+                        host_port=0,
+                        protocol='tcp'
+                    )
                 )
-            )
         return port_mappings
 
     def get_constraints(self):
@@ -272,7 +273,9 @@ class MarathonSpawner(Spawner):
             container=app_container,
             constraints=self.get_constraints(),
             health_checks=self.get_health_checks(),
-            instances=1
+            instances=1,
+            require_ports=self.network_mode == 'HOST',
+            ports=self.ports if self.network_mode == 'HOST' else []
             )
 
         app = self.marathon.create_app(self.container_name, app_request)
